@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/idkarn/curio-db/pkg/api"
 	"github.com/idkarn/curio-db/pkg/common"
@@ -68,7 +69,7 @@ func serve(port uint32) {
 
 func Launch(config DBConfig) {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		<-c
 		Terminate()
