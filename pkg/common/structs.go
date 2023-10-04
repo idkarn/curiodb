@@ -1,5 +1,7 @@
 package common
 
+import "os"
+
 type TableIdType uint8
 type ColumnIdType uint32
 type RowIdType uint64
@@ -64,4 +66,11 @@ type Table struct {
 type DatabaseStore struct {
 	Tables         []Table
 	TablesMetaData []TableMetaData
+}
+
+type File struct {
+	Path     string
+	Desc     *os.File
+	Content  []byte
+	IsOpened bool
 }

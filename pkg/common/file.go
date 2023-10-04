@@ -1,46 +1,78 @@
 package common
 
 import (
-	"fmt"
-	"log"
+	"errors"
+	"io"
+	"os"
 )
 
-func Dump() {
-	df := CreateFile("data.bin")
-	mf := CreateFile("metadata.bin")
-	defer df.Close()
-	defer mf.Close()
-
-	err := WriteFile(df, Store.Tables)
+func NewFile(path string) File {
+	desc, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, os.ModeAppend)
 	if err != nil {
-		fmt.Println(err)
-		log.Println("Write data failed")
+		panic(err)
 	}
-	err = WriteFile(mf, Store.TablesMetaData)
-	if err != nil {
-		fmt.Println(err)
-		log.Println("Write metadata failed")
+	return File{
+		Path:     path,
+		Desc:     desc,
+		Content:  nil,
+		IsOpened: true,
 	}
 }
 
-func Load() (bool, DatabaseStore) {
-	data, err := ReadConfigFile[[]Table]("data.bin")
-	if err != nil {
-		log.Println(err)
-		return false, DatabaseStore{}
-	}
-	metadata, err := ReadConfigFile[[]TableMetaData]("metadata.bin")
-	if err != nil {
-		log.Println(err)
-		return false, DatabaseStore{}
-	}
+var ErrClosedFile error = errors.New("File is closed")
 
-	return true, DatabaseStore{
-		Tables:         data,
-		TablesMetaData: metadata,
+func (f *File) Close() {
+	if f.IsOpened {
+		if err := f.Desc.Close(); err != nil {
+			panic(err)
+		}
+		f.IsOpened = false
 	}
 }
 
-func Config(configData DatabaseStore) {
-	Store = configData
+func (f *File) ReadBytes() ([]byte, error) {
+	if !f.IsOpened {
+		return nil, ErrClosedFile
+	}
+	f.Desc.Seek(0, 0)
+	bytes, err := io.ReadAll(f.Desc)
+	if err != nil {
+		panic(err)
+	}
+	f.Content = bytes
+	return bytes, nil
+}
+
+func (f File) WriteBytes(bytes []byte) error {
+	if !f.IsOpened {
+		return ErrClosedFile
+	}
+	if err := f.Desc.Truncate(0); err != nil {
+		panic(err)
+	}
+	f.Append(bytes)
+	return nil
+}
+
+func (f File) WriteString(content string) error {
+	if !f.IsOpened {
+		return ErrClosedFile
+	}
+	if err := f.Desc.Truncate(0); err != nil {
+		panic(err)
+	}
+	if _, err := f.Desc.WriteString(content); err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func (f File) Append(bytes []byte) error {
+	if !f.IsOpened {
+		return ErrClosedFile
+	}
+	if _, err := f.Desc.Write(bytes); err != nil {
+		panic(err)
+	}
+	return nil
 }

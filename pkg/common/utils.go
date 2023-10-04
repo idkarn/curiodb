@@ -9,6 +9,9 @@ import (
 	"os"
 )
 
+const DATA_FILE_NAME = ".store/data.bin"
+const METADATA_FILE_PATH = ".store/metadata.bin"
+
 var ResponseStrings = map[string]string{
 	"T1": "Table with this id not found",
 	"C2": "Column with this name was not found",
@@ -66,4 +69,42 @@ func ReadConfigFile[T []Table | []TableMetaData](name string) (T, error) {
 
 func SyncDBFiles() {
 
+}
+
+func Dump() {
+	df := CreateFile("data.bin")
+	mf := CreateFile("metadata.bin")
+	defer df.Close()
+	defer mf.Close()
+
+	err := WriteFile(df, Store.Tables)
+	if err != nil {
+		log.Println("Write data failed")
+	}
+	err = WriteFile(mf, Store.TablesMetaData)
+	if err != nil {
+		log.Println("Write metadata failed")
+	}
+}
+
+func Load() (bool, DatabaseStore) {
+	data, err := ReadConfigFile[[]Table]("data.bin")
+	if err != nil {
+		log.Println(err)
+		return false, DatabaseStore{}
+	}
+	metadata, err := ReadConfigFile[[]TableMetaData]("metadata.bin")
+	if err != nil {
+		log.Println(err)
+		return false, DatabaseStore{}
+	}
+
+	return true, DatabaseStore{
+		Tables:         data,
+		TablesMetaData: metadata,
+	}
+}
+
+func Config(configData DatabaseStore) {
+	Store = configData
 }
