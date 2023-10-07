@@ -46,7 +46,7 @@ func loadData(port uint32) {
 }
 
 func initRouter() {
-	api.SetupRouting([]api.Route{
+	api.SetupRouting([]middleware.Route{
 		{Method: "GET", Path: "/health", Handler: api.HealthHandler},
 		{Method: "POST", Path: "/row/new", Handler: api.NewRowHandler},
 		{Method: "POST", Path: "/column/new", Handler: api.NewColumnHandler},
@@ -57,7 +57,7 @@ func initRouter() {
 	})
 
 	middleware.SetupMiddlewares([]middleware.MiddlewareFn{
-		middleware.DecodeRequestPayload,
+		middleware.CheckRouteMethod,
 	})
 }
 

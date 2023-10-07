@@ -4,49 +4,34 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"reflect"
 
 	. "github.com/idkarn/curio-db/pkg/common"
+	"github.com/idkarn/curio-db/pkg/middleware"
 )
 
-type Route struct {
-	Method  string
-	Path    string
-	Handler func(http.ResponseWriter, *http.Request)
-}
-
-type RouteHandler struct {
-	HandlerFn     func(http.ResponseWriter, *http.Request)
-	RequestStruct reflect.Type
-}
-
-func SetupRouting(routes []Route) {
+func SetupRouting(routes []middleware.Route) {
 	for _, route := range routes {
 		currentRoute := route
-		http.HandleFunc(currentRoute.Path, func(w http.ResponseWriter, r *http.Request) {
-			if r.Method != currentRoute.Method {
-				http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
-			} else {
-				currentRoute.Handler(w, r)
-			}
+		http.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
+			middleware.HandleWith(w, r, currentRoute)
 		})
 	}
 }
 
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
+func HealthHandler(ctx middleware.RequestContext) {
 	log.Println("Health is being checked")
-	fmt.Fprint(w, "ok")
+	ctx.Send("ok")
 }
 
-func NewRowHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := DecodeJson[NewRow](r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func NewRowHandler(ctx middleware.RequestContext) {
+	var data NewRow
+	if err := ctx.Read(&data); err != nil {
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if data.Table >= TableIdType(len(Store.Tables)) {
-		http.Error(w, ResponseStrings["T1"], http.StatusBadRequest)
+		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
 		return
 	}
 
@@ -54,7 +39,7 @@ func NewRowHandler(w http.ResponseWriter, r *http.Request) {
 	for key, val := range data.Columns {
 		colIdx, err := FindColumnByName(data.Table, key)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			ctx.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
 		currentColumn := Store.TablesMetaData[data.Table].Columns[colIdx]
@@ -62,21 +47,21 @@ func NewRowHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var newRowId RowIdType
-	newRowId, err = AddNewRow(data.Table, dataColumns)
+	newRowId, err := AddNewRow(data.Table, dataColumns)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprint(w, newRowId)
+	ctx.Send(newRowId)
 
 	log.Printf(fmt.Sprintf("%s\n", ResponseStrings["R0"]), newRowId)
 }
 
-func GetRowHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := DecodeJson[GetRow](r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func GetRowHandler(ctx middleware.RequestContext) {
+	var data GetRow
+	if err := ctx.Read(&data); err != nil {
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -84,7 +69,7 @@ func GetRowHandler(w http.ResponseWriter, r *http.Request) {
 
 	row, err := GetRowById(tid, data.Id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		ctx.Error(err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -98,24 +83,20 @@ func GetRowHandler(w http.ResponseWriter, r *http.Request) {
 		userRow.Columns[name] = val
 	}
 
-	json, err := EncodeJson(userRow)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	fmt.Fprint(w, json)
+	ctx.SendJSON(userRow)
 
 	log.Printf(fmt.Sprintf("%s\n", ResponseStrings["R0"]), data.Id)
 }
 
-func NewColumnHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := DecodeJson[NewColumn](r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func NewColumnHandler(ctx middleware.RequestContext) {
+	var data NewColumn
+	if err := ctx.Read(&data); err != nil {
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	if data.Table >= TableIdType(len(Store.Tables)) {
-		http.Error(w, ResponseStrings["T1"], http.StatusBadRequest)
+		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
 		return
 	}
 
@@ -129,21 +110,22 @@ func NewColumnHandler(w http.ResponseWriter, r *http.Request) {
 
 	newColumnId, err := Store.TablesMetaData[data.Table].CreateNewColumn(data.Name, colType)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprint(w, newColumnId)
+	ctx.Send(newColumnId)
 }
 
-func UpdateRowHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := DecodeJson[UpdateRowData](r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func UpdateRowHandler(ctx middleware.RequestContext) {
+	var data UpdateRowData
+	if err := ctx.Read(&data); err != nil {
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	if data.Table >= TableIdType(len(Store.Tables)) {
-		http.Error(w, ResponseStrings["T1"], http.StatusBadRequest)
+		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
 		return
 	}
 
@@ -151,52 +133,53 @@ func UpdateRowHandler(w http.ResponseWriter, r *http.Request) {
 	for key, val := range data.Colunms {
 		colIdx, err := FindColumnByName(data.Table, key)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			ctx.Error(err.Error(), http.StatusBadRequest)
 			return
 		}
 		dataColumns[colIdx] = val
 	}
 
 	if err := Store.Tables[data.Table].UpdateRow(data.Id, dataColumns); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	fmt.Fprint(w, 0)
+	ctx.Send(0)
 }
 
-func DeleteRowHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := DecodeJson[DeleteRowType](r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func DeleteRowHandler(ctx middleware.RequestContext) {
+	var data DeleteRowType
+	if err := ctx.Read(&data); err != nil {
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	if data.Table >= TableIdType(len(Store.Tables)) {
-		http.Error(w, ResponseStrings["T1"], http.StatusBadRequest)
+		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
 		return
 	}
 
 	if err := Store.Tables[data.Table].DeleteRow(data.Id); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	log.Printf("%q\n", Store.Tables[data.Table].Rows)
 
-	fmt.Fprint(w, 0)
+	ctx.Send(0)
 }
 
-func GetAllRowsHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := DecodeJson[GetAllRows](r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func GetAllRowsHandler(ctx middleware.RequestContext) {
+	var data GetAllRows
+	if err := ctx.Read(&data); err != nil {
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	tid := data.Table
 
 	if tid >= TableIdType(len(Store.Tables)) {
-		http.Error(w, ResponseStrings["T1"], http.StatusBadRequest)
+		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
 		return
 	}
 
@@ -217,10 +200,5 @@ func GetAllRowsHandler(w http.ResponseWriter, r *http.Request) {
 		resp = append(resp, newRow)
 	}
 
-	json, err := EncodeJson(resp)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	fmt.Fprint(w, json)
+	ctx.SendJSON(resp)
 }
