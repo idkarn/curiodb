@@ -10,7 +10,7 @@ import (
 
 	"github.com/idkarn/curio-db/pkg/api"
 	"github.com/idkarn/curio-db/pkg/common"
-	"github.com/idkarn/curio-db/pkg/middleware"
+	mw "github.com/idkarn/curio-db/pkg/middleware"
 )
 
 type DBConfig struct {
@@ -46,18 +46,18 @@ func loadData(port uint32) {
 }
 
 func initRouter() {
-	api.SetupRouting([]middleware.Route{
-		{Method: "GET", Path: "/health", Handler: api.HealthHandler},
-		{Method: "POST", Path: "/row/new", Handler: api.NewRowHandler},
-		{Method: "POST", Path: "/column/new", Handler: api.NewColumnHandler},
-		{Method: "POST", Path: "/row/get", Handler: api.GetRowHandler},
-		{Method: "POST", Path: "/row/update", Handler: api.UpdateRowHandler},
-		{Method: "POST", Path: "/row/delete", Handler: api.DeleteRowHandler},
-		{Method: "POST", Path: "/row/all", Handler: api.GetAllRowsHandler},
+	api.SetupRouting([]mw.Route{
+		mw.NewRouteInfo("GET", "/health", api.HealthHandler),
+		mw.NewRouteInfo("POST", "/row/new", api.NewRowHandler),
+		mw.NewRouteInfo("POST", "/column/new", api.NewColumnHandler),
+		mw.NewRouteInfo("POST", "/row/get", api.GetRowHandler),
+		mw.NewRouteInfo("POST", "/row/update", api.UpdateRowHandler),
+		mw.NewRouteInfo("POST", "/row/delete", api.DeleteRowHandler),
+		mw.NewRouteInfo("POST", "/row/all", api.GetAllRowsHandler),
 	})
 
-	middleware.SetupMiddlewares([]middleware.MiddlewareFn{
-		middleware.CheckRouteMethod,
+	mw.SetupMiddlewares([]mw.MiddlewareFn{
+		mw.CheckRouteMethod,
 	})
 }
 

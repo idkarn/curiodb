@@ -7,13 +7,15 @@ import (
 	"net/http"
 )
 
+type RouteHandler func(RequestContext)
+
 type Route struct {
 	Method  string
 	Path    string
-	Handler func(RequestContext)
+	Handler RouteHandler
 }
 
-func NewRouteInfo(method, path string, handler func(RequestContext)) Route {
+func NewRouteInfo(method, path string, handler RouteHandler) Route {
 	return Route{method, path, handler}
 }
 
