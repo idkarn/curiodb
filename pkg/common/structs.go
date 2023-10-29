@@ -5,6 +5,7 @@ import "os"
 type TableIdType uint8
 type ColumnIdType uint32
 type RowIdType uint64
+type FilterType map[string][]string
 
 type NewRow struct {
 	Columns map[string]interface{} `json:"columns"`
@@ -15,9 +16,13 @@ type IDecodedJson interface {
 	NewRow | GetRow | NewColumn | UpdateRowData | DeleteRowType | GetAllRows
 }
 
+type filter struct {
+	Filter FilterType `json:"filter"`
+}
+
 type GetRow struct {
-	Id    RowIdType   `json:"id"`
 	Table TableIdType `json:"table"`
+	filter
 }
 
 type GetAllRows struct {
