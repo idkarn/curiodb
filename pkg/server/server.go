@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/idkarn/curio-db/pkg/api"
-	"github.com/idkarn/curio-db/pkg/common"
-	mw "github.com/idkarn/curio-db/pkg/middleware"
+	"github.com/idkarn/curiodb/pkg/api"
+	"github.com/idkarn/curiodb/pkg/common"
+	mw "github.com/idkarn/curiodb/pkg/middleware"
 )
 
 type DBConfig struct {
@@ -77,13 +77,13 @@ func Launch(config DBConfig) {
 	loadData(config.PORT)
 	initRouter()
 
-	log.Printf("curio-db is running on port %d\n", config.PORT)
+	log.Printf("curiodb is running on port %d\n", config.PORT)
 
 	serve(config.PORT)
 }
 
 func Terminate() {
 	common.Dump()
-	log.Println("curio-db is stopped")
+	log.Println("curiodb is stopped")
 	os.Exit(0)
 }

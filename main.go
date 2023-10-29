@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/idkarn/curio-db/pkg/server"
+	"github.com/idkarn/curiodb/pkg/server"
 )
 
 const PORT uint32 = 3141

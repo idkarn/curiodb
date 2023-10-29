@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/idkarn/curio-db/pkg/common"
+	"github.com/idkarn/curiodb/pkg/common"
 )
 
 const EqualOperator = '='

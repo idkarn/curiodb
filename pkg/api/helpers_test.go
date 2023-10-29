@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/idkarn/curio-db/pkg/common"
+	"github.com/idkarn/curiodb/pkg/common"
 )
 
 func newRow(id common.RowIdType, name string, age int) common.Row[string] {

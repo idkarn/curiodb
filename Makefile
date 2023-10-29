@@ -8,5 +8,5 @@ build:
 	go build -o bin/curiodb
 
 docker:
-	docker build -t curio-db:0.1 .
-	docker run -p 3141:3141 -d curio-db:0.1
+	docker build -t curiodb:0.1 .
+	docker run -p 3141:3141 -d curiodb:0.1

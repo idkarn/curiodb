@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	. "github.com/idkarn/curio-db/pkg/common"
-	"github.com/idkarn/curio-db/pkg/middleware"
+	. "github.com/idkarn/curiodb/pkg/common"
+	"github.com/idkarn/curiodb/pkg/middleware"
 )
 
 func SetupRouting(routes []middleware.Route) {
