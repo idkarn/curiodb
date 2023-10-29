@@ -1,6 +1,6 @@
 FROM golang:1.18 as build
 
-WORKDIR /curio-db
+WORKDIR /curiodb
 
 COPY . .
 
@@ -10,7 +10,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=build /curio-db/bin/curiodb .
+COPY --from=build /curiodb/bin/curiodb .
 
 EXPOSE 3141
 
