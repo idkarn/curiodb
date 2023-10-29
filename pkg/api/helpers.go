@@ -25,18 +25,35 @@ loop:
 	for _, row := range common.Store.Tables[tid].Rows {
 		var cols = make(map[string]interface{})
 		for field, conds := range filter {
+			if field == "id" {
+				for _, cond := range conds {
+					op := cond[0]
+					if !checkCondition(0, op) {
+						return nil, errors.New("wrong condition")
+					}
+
+					val, err := strconv.Atoi(cond[1:])
+					if err != nil {
+						return nil, errors.New("wrong id")
+					}
+
+					ok := processOperation(op, 0, float64(row.Id), float64(val))
+					if !ok {
+						continue loop
+					}
+				}
+				continue
+			}
+
 			for id, col := range row.Columns {
 				colType := columnsMeta[id].Type
-				if field == "id" {
-					col = float64(row.Id)
-					colType = 0
-				} else if columnsMeta[id].Name != field {
+				if columnsMeta[id].Name != field {
 					continue
 				}
 
 				for _, cond := range conds {
 					op := cond[0]
-					if !checkCondition(colType, col, op) {
+					if !checkCondition(colType, op) {
 						return nil, errors.New("wrong condition")
 					}
 
@@ -91,7 +108,7 @@ func convert(cond string, typeId uint8) (any, error) {
 	return val, err
 }
 
-func checkCondition(typ uint8, col interface{}, op byte) bool {
+func checkCondition(typ uint8, op byte) bool {
 	if op != EqualOperator && op != NotOperator && op != LessOperator && op != GreaterOperator && op != ContainOperator {
 		return false
 	}
