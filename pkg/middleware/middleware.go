@@ -101,11 +101,3 @@ func HandleWith(w http.ResponseWriter, r *http.Request, route Route) {
 func SetupMiddlewares(config []MiddlewareFn) {
 	Middlewares = append(Middlewares, config...)
 }
-
-func CheckRouteMethod(ctx RequestContext, next NextFunction) {
-	if ctx.Request.Method != ctx.Route.Method {
-		ctx.Error("Unsupported method", http.StatusMethodNotAllowed)
-	} else {
-		next()
-	}
-}
