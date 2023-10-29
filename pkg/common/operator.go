@@ -32,14 +32,26 @@ func FindColumnByName(tid TableIdType, name string) (ColumnIdType, error) {
 	return 0, fmt.Errorf(ResponseStrings["C2"])
 }
 
-func AddNewRow(tid TableIdType, cols map[TableColumn]interface{}) (RowIdType, error) {
+func AddNewRow(tid TableIdType, cols map[ColumnIdType]interface{}) (RowIdType, error) {
 	var newRow Row[ColumnIdType]
 	newRow.Id = RowIdType(len(Store.Tables[tid].Rows))
 	newRow.Columns = make(map[ColumnIdType]interface{})
 
 	// checking for type & assigning values to the row
-	for col, val := range cols {
-		newRow.Columns[col.Id] = val
+	for cid, val := range cols {
+		switch Store.TablesMetaData[tid].Columns[cid].Type {
+		case 0:
+			switch val.(type) {
+			case int:
+				newRow.Columns[cid] = float64(val.(int))
+			case float64:
+				newRow.Columns[cid] = val.(float64)
+			}
+		case 1:
+			newRow.Columns[cid] = val.(string)
+		case 2:
+			newRow.Columns[cid] = val.(bool)
+		}
 	}
 
 	Store.Tables[tid].Rows = append(Store.Tables[tid].Rows, newRow)

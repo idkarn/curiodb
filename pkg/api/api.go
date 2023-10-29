@@ -35,15 +35,14 @@ func NewRowHandler(ctx middleware.RequestContext) {
 		return
 	}
 
-	dataColumns := make(map[TableColumn]interface{})
+	dataColumns := make(map[ColumnIdType]interface{})
 	for key, val := range data.Columns {
 		colIdx, err := FindColumnByName(data.Table, key)
 		if err != nil {
 			ctx.Error(err.Error(), http.StatusInternalServerError)
 			return
 		}
-		currentColumn := Store.TablesMetaData[data.Table].Columns[colIdx]
-		dataColumns[currentColumn] = val
+		dataColumns[colIdx] = val
 	}
 
 	var newRowId RowIdType
@@ -67,25 +66,27 @@ func GetRowHandler(ctx middleware.RequestContext) {
 
 	tid := data.Table
 
-	row, err := GetRowById(tid, data.Id)
-	if err != nil {
-		ctx.Error(err.Error(), http.StatusNotFound)
-		return
-	}
+	// row, err := GetRowById(tid, data.Id)
+	// if err != nil {
+	// 	ctx.Error(err.Error(), http.StatusNotFound)
+	// 	return
+	// }
 
-	userRow := Row[string]{
-		Id:      row.Id,
-		Columns: make(map[string]interface{}),
-	}
+	// userRow := Row[string]{
+	// 	Id:      row.Id,
+	// 	Columns: make(map[string]interface{}),
+	// }
 
-	for id, val := range row.Columns {
-		name := Store.TablesMetaData[tid].Columns[id].Name
-		userRow.Columns[name] = val
-	}
+	// for id, val := range row.Columns {
+	// 	name := Store.TablesMetaData[tid].Columns[id].Name
+	// 	userRow.Columns[name] = val
+	// }
+
+	userRow, _ := SearchForRecords(tid, data.Filter)
 
 	ctx.SendJSON(userRow)
 
-	log.Printf(fmt.Sprintf("%s\n", ResponseStrings["R0"]), data.Id)
+	log.Printf(fmt.Sprintf("%s\n", ResponseStrings["R0"]), -1)
 }
 
 func NewColumnHandler(ctx middleware.RequestContext) {
