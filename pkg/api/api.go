@@ -72,7 +72,7 @@ func GetRowHandler(ctx middleware.RequestContext) {
 
 	ctx.SendJSON(userRow)
 
-	log.Printf(fmt.Sprintf("%s\n", ResponseStrings["R0"]), -1)
+	// log.Printf(fmt.Sprintf("%s\n", ResponseStrings["R0"]), -1)
 }
 
 func NewColumnHandler(ctx middleware.RequestContext) {
@@ -111,27 +111,40 @@ func UpdateRowHandler(ctx middleware.RequestContext) {
 		return
 	}
 
-	if data.Table >= TableIdType(len(Store.Tables)) {
-		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
-		return
-	}
-
-	dataColumns := make(map[ColumnIdType]interface{})
-	for key, val := range data.Colunms {
-		colIdx, err := FindColumnByName(data.Table, key)
-		if err != nil {
-			ctx.Error(err.Error(), http.StatusBadRequest)
-			return
-		}
-		dataColumns[colIdx] = val
-	}
-
-	if err := Store.Tables[data.Table].UpdateRow(data.Id, dataColumns); err != nil {
+	rows, err := SearchForRecords(data.Table, data.Filter)
+	if err != nil {
 		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	ctx.Send(0)
+	var failed []RowIdType
+	for _, row := range rows { // FIXME: unrevertable changes
+		dataColumns := make(map[ColumnIdType]interface{})
+		for key, val := range data.Colunms {
+			colIdx, err := FindColumnByName(data.Table, key)
+			if err != nil {
+				ctx.Error(err.Error(), http.StatusBadRequest)
+				return
+			}
+			dataColumns[colIdx] = val
+		}
+
+		if err := Store.Tables[data.Table].UpdateRow(row.Id, dataColumns); err != nil {
+			failed = append(failed, row.Id)
+		}
+	}
+
+	if len(failed) == 0 {
+		ctx.SendJSON(map[string]any{
+			"ok":     true,
+			"failed": nil,
+		})
+	} else {
+		ctx.SendJSON(map[string]any{
+			"ok":     false,
+			"failed": failed,
+		})
+	}
 }
 
 func DeleteRowHandler(ctx middleware.RequestContext) {
@@ -141,17 +154,28 @@ func DeleteRowHandler(ctx middleware.RequestContext) {
 		return
 	}
 
-	if data.Table >= TableIdType(len(Store.Tables)) {
-		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
-		return
-	}
-
-	if err := Store.Tables[data.Table].DeleteRow(data.Id); err != nil {
+	rows, err := SearchForRecords(data.Table, data.Filter)
+	if err != nil {
 		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("%q\n", Store.Tables[data.Table].Rows)
+	var failed []RowIdType
+	for _, row := range rows {
+		if err := Store.Tables[data.Table].DeleteRow(row.Id); err != nil {
+			failed = append(failed, row.Id)
+		}
+	}
 
-	ctx.Send(0)
+	if len(failed) == 0 {
+		ctx.SendJSON(map[string]any{
+			"ok":     true,
+			"failed": nil,
+		})
+	} else {
+		ctx.SendJSON(map[string]any{
+			"ok":     false,
+			"failed": failed,
+		})
+	}
 }

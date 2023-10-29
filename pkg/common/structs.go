@@ -13,7 +13,7 @@ type NewRow struct {
 }
 
 type IDecodedJson interface {
-	NewRow | GetRow | NewColumn | UpdateRowData | DeleteRowType | GetAllRows
+	NewRow | GetRow | NewColumn | UpdateRowData | DeleteRowType
 }
 
 type filter struct {
@@ -25,19 +25,15 @@ type GetRow struct {
 	filter
 }
 
-type GetAllRows struct {
-	Table TableIdType `json:"table"`
-}
-
 type UpdateRowData struct {
 	Table   TableIdType            `json:"table"`
-	Id      RowIdType              `json:"id"`
 	Colunms map[string]interface{} `json:"columns"`
+	filter
 }
 
 type DeleteRowType struct {
 	Table TableIdType `json:"table"`
-	Id    RowIdType   `json:"id"`
+	filter
 }
 
 type NewColumn struct {

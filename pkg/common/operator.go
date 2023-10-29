@@ -72,14 +72,14 @@ func (table *TableMetaData) CreateNewColumn(name string, colType uint8) (ColumnI
 	return newColumn.Id, nil
 }
 
-func (t Table) UpdateRow(rid RowIdType, data map[ColumnIdType]interface{}) error {
+func (t Table) UpdateRow(rid RowIdType, diff map[ColumnIdType]interface{}) error {
 	if rid >= RowIdType(len(t.Rows)) {
 		return fmt.Errorf(ResponseStrings["R1"])
 	}
 
 	// TODO: add data type checking
-	for key := range t.Rows[rid].Columns {
-		t.Rows[rid].Columns[key] = data[key]
+	for id, val := range diff {
+		t.Rows[rid].Columns[id] = val
 	}
 
 	return nil
@@ -93,8 +93,4 @@ func (t *Table) DeleteRow(rid RowIdType) error {
 	t.Rows = append(t.Rows[:rid], t.Rows[rid+1:]...)
 
 	return nil
-}
-
-func (t Table) GetAllRows() []Row[ColumnIdType] {
-	return t.Rows
 }
