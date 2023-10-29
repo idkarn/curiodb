@@ -15,14 +15,10 @@ const GreaterOperator = '>'
 const ContainOperator = '.'
 
 func SearchForRecords(tid common.TableIdType, filter common.FilterType) ([]common.Row[string], error) {
-	// cols := []common.ColumnIdType{}
-	// for field, _ := range filter {
-	// 	id, err := common.FindColumnByName(tid, field)
-	// 	if err != nil {
-	// 		return nil, errors.New("wrong field")
-	// 	}
-	// 	cols = append(cols, id)
-	// }
+	if tid >= common.TableIdType(len(common.Store.Tables)) {
+		return nil, errors.New(common.ResponseStrings["T1"])
+	}
+
 	rows := []common.Row[string]{}
 	columnsMeta := common.Store.TablesMetaData[tid].Columns
 loop:

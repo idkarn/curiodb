@@ -53,7 +53,6 @@ func initRouter() {
 		mw.NewRouteInfo("POST", "/row/get", api.GetRowHandler),
 		mw.NewRouteInfo("POST", "/row/update", api.UpdateRowHandler),
 		mw.NewRouteInfo("POST", "/row/delete", api.DeleteRowHandler),
-		mw.NewRouteInfo("POST", "/row/all", api.GetAllRowsHandler),
 	})
 
 	mw.SetupMiddlewares([]mw.MiddlewareFn{

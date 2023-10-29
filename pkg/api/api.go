@@ -64,25 +64,11 @@ func GetRowHandler(ctx middleware.RequestContext) {
 		return
 	}
 
-	tid := data.Table
-
-	// row, err := GetRowById(tid, data.Id)
-	// if err != nil {
-	// 	ctx.Error(err.Error(), http.StatusNotFound)
-	// 	return
-	// }
-
-	// userRow := Row[string]{
-	// 	Id:      row.Id,
-	// 	Columns: make(map[string]interface{}),
-	// }
-
-	// for id, val := range row.Columns {
-	// 	name := Store.TablesMetaData[tid].Columns[id].Name
-	// 	userRow.Columns[name] = val
-	// }
-
-	userRow, _ := SearchForRecords(tid, data.Filter)
+	userRow, err := SearchForRecords(data.Table, data.Filter)
+	if err != nil {
+		ctx.Error(err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	ctx.SendJSON(userRow)
 
@@ -168,38 +154,4 @@ func DeleteRowHandler(ctx middleware.RequestContext) {
 	log.Printf("%q\n", Store.Tables[data.Table].Rows)
 
 	ctx.Send(0)
-}
-
-func GetAllRowsHandler(ctx middleware.RequestContext) {
-	var data GetAllRows
-	if err := ctx.Read(&data); err != nil {
-		ctx.Error(err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	tid := data.Table
-
-	if tid >= TableIdType(len(Store.Tables)) {
-		ctx.Error(ResponseStrings["T1"], http.StatusBadRequest)
-		return
-	}
-
-	rows := Store.Tables[tid].GetAllRows()
-
-	var resp []Row[string]
-	for _, row := range rows {
-		newRow := Row[string]{
-			Id:      row.Id,
-			Columns: make(map[string]interface{}),
-		}
-
-		for id, val := range row.Columns {
-			name := Store.TablesMetaData[tid].Columns[id].Name
-			newRow.Columns[name] = val
-		}
-
-		resp = append(resp, newRow)
-	}
-
-	ctx.SendJSON(resp)
 }
