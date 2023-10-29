@@ -88,11 +88,16 @@ func NewColumnHandler(ctx middleware.RequestContext) {
 	}
 
 	var colType uint8
-	for key, val := range ColumnsTypeEnum {
-		if val == data.Type {
-			colType = uint8(key)
-			break
-		}
+	switch data.Type {
+	case ColumnsTypeEnum[0]:
+		colType = 0
+	case ColumnsTypeEnum[1]:
+		colType = 1
+	case ColumnsTypeEnum[2]:
+		colType = 2
+	default:
+		ctx.Error(ResponseStrings["C1"], http.StatusBadRequest)
+		return
 	}
 
 	newColumnId, err := Store.TablesMetaData[data.Table].CreateNewColumn(data.Name, colType)

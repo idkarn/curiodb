@@ -14,6 +14,7 @@ const METADATA_FILE_PATH = ".store/metadata.bin"
 
 var ResponseStrings = map[string]string{
 	"T1": "Table with this id not found",
+	"C1": "This column type is not allowed",
 	"C2": "Column with this name was not found",
 	"R0": "Row with id %d has been found",
 	"R1": "Row with this id was not found",
