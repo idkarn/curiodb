@@ -19,7 +19,7 @@ type DBConfig struct {
 
 func NewConfig(port uint32) DBConfig {
 	if port < 1024 || port > 49151 {
-		panic("This port is not allowed")
+		panic(fmt.Sprintf("Port %d is not allowed", port))
 	}
 	return DBConfig{port}
 }
